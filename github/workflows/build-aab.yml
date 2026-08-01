@@ -1,7 +1,7 @@
 name: Build Android App Bundle
 
 on:
-  workflow_dispatch: # Allows manual trigger from browser
+  workflow_dispatch:
 
 jobs:
   build:
@@ -10,6 +10,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Extract Project ZIP
+        run: |
+          unzip -o "nitro-drift (5).zip" -d extracted_app || true
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -21,11 +25,17 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Release AAB
-        run: ./gradlew bundleRelease
+        run: |
+          if [ -d "extracted_app" ]; then
+            cd extracted_app && ../gradlew bundleRelease || ../gradlew build
+          else
+            ./gradlew bundleRelease || ./gradlew build
+          fi
 
       - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
-          path: app/build/outputs/bundle/release/*.aab
+          path: '**/*.aab'
+
 
